@@ -86,11 +86,12 @@ public class MainActivity extends Activity {
             try {
                 oos = new ObjectOutputStream(socket.getOutputStream());
                 //TODO hardcode sample code
-                Map<String, Integer> map = new HashMap<>();
-                map.put(FoodsEnum.BURGERS.getName(), 2);
-                map.put(FoodsEnum.CHICHENS.getName(), 2);
-                map.put(FoodsEnum.ONIONRINGS.getName(), 3);
-                map.put(FoodsEnum.FRENCHFRIES.getName(), 5);
+                Map<String, Integer> map = Collections.unmodifiableMap(Stream.of(
+                        new AbstractMap.SimpleEntry<>(FoodsEnum.BURGERS.getName(), 2),
+                        new AbstractMap.SimpleEntry<>(FoodsEnum.CHICHENS.getName(), 2),
+                        new AbstractMap.SimpleEntry<>(FoodsEnum.ONIONRINGS.getName(), 3),
+                        new AbstractMap.SimpleEntry<>(FoodsEnum.FRENCHFRIES.getName(), 5)
+                ).collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue())));
                 Order order = new Order(orderList.size(), customerId, customerName, map);
                 Message message = new Message(order, new Nodification(""), false, null);
                 oos.writeObject(message);
@@ -138,7 +139,12 @@ public class MainActivity extends Activity {
                     } else if (object instanceof Integer) {
                         isInteger = true;
                     }
-
+                    if (message != null){
+                        int orderId = message.getOrder().getOrderId();
+                        orderList.get(orderId).setNodification(new Nodification(Nodification.Status.RECEIVE.getStatus()));
+                        MainActivity.this.runOnUiThread(() -> textResponse.setText(response +=
+                                ("\n #" + orderId + " order has been received")));
+                    }
                     if (isInteger) {
                         customerId = (Integer) object;
                         MainActivity.this.runOnUiThread(new Runnable() {
