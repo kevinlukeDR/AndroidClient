@@ -3,10 +3,14 @@ package com.finalproject.lu.client;
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import POJO.FoodsEnum;
 import POJO.Message;
 import POJO.Nodification;
+import POJO.Order;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
@@ -25,20 +29,23 @@ public class MainActivity extends Activity {
     String dstAddress;
     int dstPort;
     String response = "";
+    private int customerId;
+    private String customerName;
+    private static List<Message> orderList;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        orderList = new ArrayList<>();
         editTextAddress = (EditText)findViewById(R.id.address);
         editTextPort = (EditText)findViewById(R.id.port);
         buttonConnect = (Button)findViewById(R.id.connect);
         buttonClear = (Button)findViewById(R.id.clear);
         buttonSend = (Button)findViewById(R.id.send);
         textResponse = (TextView)findViewById(R.id.response);
-
+        customerName = editTextAddress.getText().toString();
         buttonConnect.setOnClickListener(buttonConnectOnClickListener);
-        buttonSend.setOnClickListener(buttonSendOnClickListener);
+        buttonSend.setOnClickListener(buttonSubmitOnClickListener);
         buttonClear.setOnClickListener(new OnClickListener(){
 
             @Override
@@ -48,30 +55,27 @@ public class MainActivity extends Activity {
     }
 
     OnClickListener buttonConnectOnClickListener =
+            arg0 -> {
+                MyClientTask myClientTask = new MyClientTask(
+                        "192.168.200.2",
+                        8080);
+                myClientTask.start();
+            };
+
+    OnClickListener buttonSubmitOnClickListener =
             new OnClickListener(){
 
                 @Override
                 public void onClick(View arg0) {
-                    MyClientTask myClientTask = new MyClientTask(
-                            "192.168.200.2",
-                            8080);
+                    SubmitThread myClientTask = new SubmitThread(editTextAddress.getText().toString());
                     myClientTask.start();
                 }};
 
-    OnClickListener buttonSendOnClickListener =
-            new OnClickListener(){
-
-                @Override
-                public void onClick(View arg0) {
-                    SocketServerReplyThread myClientTask = new SocketServerReplyThread(editTextAddress.getText().toString());
-                    myClientTask.start();
-                }};
-
-    private class SocketServerReplyThread extends Thread {
+    private class SubmitThread extends Thread {
 
         private String test;
 
-        SocketServerReplyThread(String test) {
+        SubmitThread(String test) {
             this.test = test;
         }
 
@@ -82,10 +86,16 @@ public class MainActivity extends Activity {
             try {
                 oos = new ObjectOutputStream(socket.getOutputStream());
                 //TODO hardcode sample code
-                Message message = new Message(new HashMap<String, Integer>(),new Nodification("1231"), false);
+                Map<String, Integer> map = new HashMap<>();
+                map.put(FoodsEnum.BURGERS.getName(), 2);
+                map.put(FoodsEnum.CHICHENS.getName(), 2);
+                map.put(FoodsEnum.ONIONRINGS.getName(), 3);
+                map.put(FoodsEnum.FRENCHFRIES.getName(), 5);
+                Order order = new Order(orderList.size(), customerId, customerName, map);
+                Message message = new Message(order, new Nodification(""), false, null);
                 oos.writeObject(message);
                 oos.flush();
-
+                orderList.add(message);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -96,7 +106,7 @@ public class MainActivity extends Activity {
 
                 @Override
                 public void run() {
-                    textResponse.setText(test);
+                    textResponse.setText("Submitted");
                 }
             });
         }
@@ -104,7 +114,7 @@ public class MainActivity extends Activity {
     }
 
     public class MyClientTask extends Thread {
-
+        String reply = "";
         MyClientTask(String addr, int port){
             dstAddress = addr;
             dstPort = port;
@@ -115,23 +125,38 @@ public class MainActivity extends Activity {
 
             try {
                 socket = new Socket(dstAddress, dstPort);
+                while (true) {
+                    InputStream is = socket.getInputStream();
+                    ObjectInputStream ois = new ObjectInputStream(is);
+                    Object object = ois.readObject();
+                    Message message = null;
+                    boolean isInteger = false;
+                    if (object instanceof String) {
+                        reply = (String) object;
+                    } else if (object instanceof Message) {
+                        message = (Message) object;
+                    } else if (object instanceof Integer) {
+                        isInteger = true;
+                    }
 
-                ByteArrayOutputStream byteArrayOutputStream =
-                        new ByteArrayOutputStream(1024);
-                byte[] buffer = new byte[1024];
-
-                int bytesRead;
-                InputStream inputStream = socket.getInputStream();
-
-				/*
-				 * notice:
-				 * inputStream.read() will block if no data return
-				 */
-                while ((bytesRead = inputStream.read(buffer)) != -1){
-                    byteArrayOutputStream.write(buffer, 0, bytesRead);
-                    response += byteArrayOutputStream.toString("UTF-8");
+                    if (isInteger) {
+                        customerId = (Integer) object;
+                        MainActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                textResponse.setText(response += "\n Welcome!!");
+                            }
+                        });
+                    } else {
+                        // TODO Other return case
+                        MainActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                textResponse.setText(response += ("\n" + reply));
+                            }
+                        });
+                    }
                 }
-
             } catch (UnknownHostException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -140,17 +165,18 @@ public class MainActivity extends Activity {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
                 response = "IOException: " + e.toString();
-            }
-//			finally{
-//				if(socket != null){
-//					try {
-//						socket.close();
-//					} catch (IOException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					}
-//				}
-//			}
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } finally{
+				if(socket != null){
+					try {
+						socket.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
         }
 
 
@@ -168,5 +194,18 @@ public class MainActivity extends Activity {
                 e.printStackTrace();
             }
         }
+    }
+
+    // TODO move to Util
+    private static boolean isInteger(String s) {
+        try {
+            Integer.parseInt(s);
+        } catch(NumberFormatException e) {
+            return false;
+        } catch(NullPointerException e) {
+            return false;
+        }
+        // only got here if we didn't return false
+        return true;
     }
 }
