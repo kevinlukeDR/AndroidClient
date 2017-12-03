@@ -60,8 +60,12 @@ public class MakeOrderActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.mainlayout);
+        customerId = 0;
+        customerName = "Jerry";
         currentOrder = new MyOrder();
         inidata();
+        MyClientTask myClientTask = new MyClientTask();
+        myClientTask.start();
     }
 
     private void inidata(){
@@ -188,8 +192,7 @@ public class MakeOrderActivity extends AppCompatActivity {
 //        bundle.putSerializable("CurrentOrder",currentOrder);
 //        intent.putExtras(bundle);
 //        startActivity(intent);
-        MyClientTask myClientTask = new MyClientTask();
-        myClientTask.start();
+
         if (socket != null){
             SubmitThread submitThread = new SubmitThread();
             submitThread.start();
