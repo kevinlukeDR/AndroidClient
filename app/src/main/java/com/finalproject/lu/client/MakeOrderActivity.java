@@ -46,6 +46,10 @@ public class MakeOrderActivity extends AppCompatActivity {
     private ArrayList<View> pageview;
     private MyOrder currentOrder;
     private Socket socket;
+    private Socket listenSocket;
+    String dstAddress;
+    int dstPort;
+    int listenPort;
     private static List<Message> orderList;
 
     private int customerId;
@@ -60,7 +64,7 @@ public class MakeOrderActivity extends AppCompatActivity {
         currentOrder = new MyOrder();
         inidata();
         orderList = new ArrayList<>();
-        MyClientTask myClientTask = new MyClientTask();
+        MyClientTask myClientTask = new MyClientTask("localhost", 8080, 8081);
         myClientTask.start();
     }
 
@@ -199,7 +203,7 @@ public class MakeOrderActivity extends AppCompatActivity {
 //        intent.putExtras(bundle);
 //        startActivity(intent);
 
-        if (socket != null){
+        if (listenSocket != null){
             SubmitThread submitThread = new SubmitThread();
             submitThread.start();
         }
@@ -363,31 +367,20 @@ public class MakeOrderActivity extends AppCompatActivity {
 
     }
 
-
-
-
     private class SubmitThread extends Thread {
-
-        private String test;
-//
-//        SubmitThread(String test) {
-//            this.test = test;
-//        }
+        SubmitThread() {
+        }
 
         @Override
         public void run() {
             ObjectOutputStream oos;
 
             try {
-                OutputStream os = socket.getOutputStream();
-                oos = new ObjectOutputStream(os);
-//                //TODO hardcode sample code
-//                Map<String, Integer> map = Collections.unmodifiableMap(Stream.of(
-//                        new AbstractMap.SimpleEntry<>(FoodsEnum.BURGERS.getName(), 2),
-//                        new AbstractMap.SimpleEntry<>(FoodsEnum.CHICHENS.getName(), 2),
-//                        new AbstractMap.SimpleEntry<>(FoodsEnum.ONIONRINGS.getName(), 3),
-//                        new AbstractMap.SimpleEntry<>(FoodsEnum.FRENCHFRIES.getName(), 5)
-//                ).collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue())));
+                if (socket == null) {
+                    socket = new Socket(dstAddress, dstPort);
+                }
+                oos = new ObjectOutputStream(socket.getOutputStream());
+                //TODO hardcode sample code
                 Map<String, Integer> map = new HashMap<>();
                 for(Item i : currentOrder.getItems()){
                     map.put(i.getName(), i.getAmount());
@@ -400,30 +393,27 @@ public class MakeOrderActivity extends AppCompatActivity {
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
-                //test += "Something wrong! " + e.toString() + "\n";
             }
-
-//            MainActivity.this.runOnUiThread(new Runnable() {
-//
-//                @Override
-//                public void run() {
-//                    textResponse.setText("Submitted");
-//                }
-//            });
         }
 
     }
 
+
     public class MyClientTask extends Thread {
         String reply = "";
+        MyClientTask(String addr, int port, int listen){
+            dstAddress = addr;
+            dstPort = port;
+            listenPort = listen;
+        }
 
         @Override
         public void run() {
 
             try {
-                socket = new Socket("localhost", 8080);
+                listenSocket = new Socket(dstAddress, listenPort);
                 while (true) {
-                    InputStream is = socket.getInputStream();
+                    InputStream is = listenSocket.getInputStream();
                     ObjectInputStream ois = new ObjectInputStream(is);
                     Object object = ois.readObject();
                     Message message = null;
@@ -438,41 +428,25 @@ public class MakeOrderActivity extends AppCompatActivity {
                     if (message != null){
                         int orderId = message.getOrder().getOrderId();
                         orderList.get(orderId).setNodification(new Nodification(Nodification.Status.RECEIVE.getStatus()));
-//                        MainActivity.this.runOnUiThread(() -> textResponse.setText(response +=
-//                                ("\n #" + orderId + " order has been received")));
                     }
                     if (isInteger) {
                         customerId = (Integer) object;
-//                        MainActivity.this.runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                textResponse.setText(response += "\n Welcome!!");
-//                            }
-//                        });
                     } else {
                         // TODO Other return case
-//                        MainActivity.this.runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                textResponse.setText(response += ("\n" + reply));
-//                            }
-//                        });
                     }
                 }
             } catch (UnknownHostException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
-               // response = "UnknownHostException: " + e.toString();
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
-                //response = "IOException: " + e.toString();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             } finally{
-                if(socket != null){
+                if(listenSocket != null){
                     try {
-                        socket.close();
+                        listenSocket.close();
                     } catch (IOException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
@@ -483,5 +457,18 @@ public class MakeOrderActivity extends AppCompatActivity {
 
 
 
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
     }
 }
