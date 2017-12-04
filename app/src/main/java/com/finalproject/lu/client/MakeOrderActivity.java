@@ -1,9 +1,12 @@
 package com.finalproject.lu.client;
 
+
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -54,6 +57,7 @@ public class MakeOrderActivity extends AppCompatActivity {
 
     private int customerId;
     private String customerName;
+    final Context context = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -159,7 +163,7 @@ public class MakeOrderActivity extends AppCompatActivity {
             list.add(map);
         }
 
-        MyOrderAdapter as = new MyOrderAdapter(MakeOrderActivity.this,
+        MyOrderAdapter as = new MyOrderAdapter(context,
                 currentOrder.getItems(),
                 R.layout.cart_adapter,
                 new String[] {"Amount","name","price"},
@@ -179,7 +183,7 @@ public class MakeOrderActivity extends AppCompatActivity {
             list2.add(map);
         }
 
-        SimpleAdapter as2 = new SimpleAdapter(MakeOrderActivity.this,
+        SimpleAdapter as2 = new SimpleAdapter(context,
                 list2,
                 R.layout.cart_adapter,
                 new String[] {"Amount","name","price"},
@@ -204,7 +208,11 @@ public class MakeOrderActivity extends AppCompatActivity {
 //        startActivity(intent);
 
         if (listenSocket != null){
-            SubmitThread submitThread = new SubmitThread();
+            Map<String, Integer> map = new HashMap<>();
+            for(Item i : currentOrder.getItems()){
+                map.put(i.getName(), i.getAmount());
+            }
+            SubmitThread submitThread = new SubmitThread(map);
             submitThread.start();
         }
     }
@@ -368,7 +376,9 @@ public class MakeOrderActivity extends AppCompatActivity {
     }
 
     private class SubmitThread extends Thread {
-        SubmitThread() {
+        Map<String, Integer> map;
+        SubmitThread(Map<String, Integer> map) {
+            this.map = map;
         }
 
         @Override
@@ -381,17 +391,12 @@ public class MakeOrderActivity extends AppCompatActivity {
                 }
                 oos = new ObjectOutputStream(socket.getOutputStream());
                 //TODO hardcode sample code
-                Map<String, Integer> map = new HashMap<>();
-                for(Item i : currentOrder.getItems()){
-                    map.put(i.getName(), i.getAmount());
-                }
                 Order order = new Order(orderList.size(), customerId, customerName, map);
-                Message message = new Message(order, new Nodification(""), false, null);
+                Message message = new Message(order, new Nodification(Nodification.Status.SUBMIT.getStatus()), false, null);
                 oos.writeObject(message);
                 oos.flush();
                 orderList.add(message);
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -427,7 +432,32 @@ public class MakeOrderActivity extends AppCompatActivity {
                     }
                     if (message != null){
                         int orderId = message.getOrder().getOrderId();
-                        orderList.get(orderId).setNodification(new Nodification(Nodification.Status.RECEIVE.getStatus()));
+                        if (message.getNodification().getNodification().equals(
+                                Nodification.Status.PARTIAL.getStatus())){
+                            AlertDialog.Builder builder = new AlertDialog.Builder(MakeOrderActivity.this);
+
+                            Message finalMessage = message;
+                            builder.setTitle("Delete entry")
+                                    .setMessage("Are you sure you want to delete this entry?")
+                                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            // TODO Solve "Skipped 437 frames!  The application may be doing too much work on its main thread." problem
+                                            // continue with place order
+//                                            SubmitThread submitThread = new SubmitThread((Map<String, Integer>) finalMessage.getOther());
+//                                            submitThread.start();
+                                        }
+                                    })
+                                    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+//                                            orderList.get(orderId).getNodification().setNodification(Nodification.Status.CANCEL.getStatus());
+                                        }
+                                    });
+                            builder.create();
+                            builder.show();
+                        }
+                        else {
+                            orderList.get(orderId).setNodification(message.getNodification());
+                        }
                     }
                     if (isInteger) {
                         customerId = (Integer) object;
@@ -436,10 +466,8 @@ public class MakeOrderActivity extends AppCompatActivity {
                     }
                 }
             } catch (UnknownHostException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
@@ -448,7 +476,6 @@ public class MakeOrderActivity extends AppCompatActivity {
                     try {
                         listenSocket.close();
                     } catch (IOException e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                 }
@@ -466,7 +493,6 @@ public class MakeOrderActivity extends AppCompatActivity {
             try {
                 socket.close();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
