@@ -13,13 +13,8 @@ public class Item implements Serializable {
     private String name;
     private float price;
     private int amount;
-    private ArrayList<Drawable> images;
     private int img;
-    private String description;
 
-    public Item(){
-        images = new ArrayList<>();
-    }
 
     public float getPrice() {
         return price;
@@ -37,24 +32,12 @@ public class Item implements Serializable {
         return amount;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
     public String getName() {
         return name;
     }
 
-    public ArrayList<Drawable> getImages() {
-        return images;
-    }
-
     public void setAmount(int amount) {
         this.amount = amount;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public void setName(String name) {
@@ -63,9 +46,5 @@ public class Item implements Serializable {
 
     public void setPrice(float price) {
         this.price = price;
-    }
-
-    public void setImages(ArrayList<Drawable> images) {
-        this.images = images;
     }
 }

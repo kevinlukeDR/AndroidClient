@@ -1,7 +1,6 @@
 package com.finalproject.lu.client;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -24,15 +23,11 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import android.widget.TextView;
 
@@ -64,6 +59,7 @@ public class MakeOrderActivity extends AppCompatActivity {
         customerName = "Jerry";
         currentOrder = new MyOrder();
         inidata();
+        orderList = new ArrayList<>();
         MyClientTask myClientTask = new MyClientTask();
         myClientTask.start();
     }
@@ -105,17 +101,27 @@ public class MakeOrderActivity extends AppCompatActivity {
         Item it = new Item();
         it.setName(FoodsEnum.BURGERS.getName());
         it.setAmount(1);
-        it.setDescription("Delicious Burger");
         it.setPrice(7.99f);
         it.setImg(R.drawable.burger);
         Item it1 = new Item();
         it1.setName(FoodsEnum.FRENCHFRIES.getName());
         it1.setAmount(2);
-        it1.setDescription("Mild Fries");
         it1.setPrice(3.99f);
         it1.setImg(R.drawable.chips);
+        Item it2 = new Item();
+        it2.setName(FoodsEnum.CHICHENS.getName());
+        it2.setAmount(3);
+        it2.setImg(R.drawable.chicken);
+        it2.setPrice(5.99f);
+        Item it3 = new Item();
+        it3.setName(FoodsEnum.ONIONRINGS.getName());
+        it3.setPrice(4.49f);
+        it3.setAmount(4);
+        it3.setImg(R.drawable.onionring);
         items.add(it);
-        items.add(it1);// set datas
+        items.add(it1);
+        items.add(it2);
+        items.add(it3);// set datas
 
         ListView listView = (ListView)v1.findViewById(R.id.listview);
         MyAdapter as = new MyAdapter(MakeOrderActivity.this,
@@ -197,9 +203,6 @@ public class MakeOrderActivity extends AppCompatActivity {
             SubmitThread submitThread = new SubmitThread();
             submitThread.start();
         }
-
-
-
     }
 
     public class MyAdapter extends BaseAdapter{
