@@ -56,6 +56,14 @@ public class MyOrder implements Serializable {
         this.issuedDate = issuedDate;
     }
 
+    public float getTotalPrice(){
+        float totalprice = 0;
+        for (Item it : items){
+            totalprice+= it.getAmount()*it.getPrice();
+        }
+        return totalprice;
+    }
+
     public void setItems(ArrayList<Item> items) {
         this.items = items;
     }

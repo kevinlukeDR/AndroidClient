@@ -28,7 +28,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:onClick="onClick_change"
-            android:text="ChangeStatus" />
+            android:text="History Order" />
     </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

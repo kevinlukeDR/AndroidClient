@@ -4,6 +4,7 @@ package com.finalproject.lu.client;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import java.text.DecimalFormat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
@@ -43,8 +44,7 @@ import POJO.Order;
 public class MakeOrderActivity extends AppCompatActivity {
 
     private ArrayList<Item> items;
-    private GestureDetector mgd;
-    private static final String TAG = "MakeOrderActivity";
+    private ArrayList<String> statuslist;
     private ViewPager viewPager;
     private ArrayList<View> pageview;
     private MyOrder currentOrder;
@@ -66,7 +66,9 @@ public class MakeOrderActivity extends AppCompatActivity {
         customerId = 0;
         customerName = "Jerry";
         currentOrder = new MyOrder();
+
         inidata();
+//        setAdapter(null);
         orderList = new ArrayList<>();
         MyClientTask myClientTask = new MyClientTask("localhost", 8080, 8081);
         myClientTask.start();
@@ -78,10 +80,13 @@ public class MakeOrderActivity extends AppCompatActivity {
         LayoutInflater inflater = getLayoutInflater();
         View v1 = inflater.inflate(R.layout.activity_make_order,null);
         View v2 = inflater.inflate(R.layout.activity_view_order,null);
+        View v3 = inflater.inflate(R.layout.activity_trace_order,null);
 
         pageview =new ArrayList<View>();
         pageview.add(v1);
         pageview.add(v2);
+        pageview.add(v3);
+        pageview.get(2).setVisibility(View.GONE);
 
         PagerAdapter mpa = new PagerAdapter() {
             @Override
@@ -104,6 +109,12 @@ public class MakeOrderActivity extends AppCompatActivity {
             }
         };
         viewPager.setAdapter(mpa); //set viewpager
+
+        String[] status = new String[]{"Submitting","Receiving","Preparing","Packaging","Delivery to front cashier"};
+        statuslist = new ArrayList<>();
+        for (String s: status){
+            statuslist.add(s);
+        }
 
         items = new ArrayList<>();
         Item it = new Item();
@@ -153,6 +164,9 @@ public class MakeOrderActivity extends AppCompatActivity {
             TextView txttime = (TextView)v.findViewById(R.id.txtOrderTime);
             txttime.setText(currentOrder.getIssuedDate().toString());
         }
+        TextView txttotal = (TextView)v.findViewById(R.id.txtTotalPrice);
+        DecimalFormat decimalFormat=new DecimalFormat(".00");
+        txttotal.setText(decimalFormat.format(currentOrder.getTotalPrice()));
         ListView listView = (ListView)v.findViewById(R.id.listview);
         ArrayList<Map<String, Object>> list = new ArrayList<>();
         for (Item i : currentOrder.getItems()){
@@ -172,24 +186,24 @@ public class MakeOrderActivity extends AppCompatActivity {
         listView.setAdapter(as);
     }
 
-    private void setupCustomFilterView(View customView){
-        ListView listView2 = (ListView)customView.findViewById(R.id.listview);
-        ArrayList<Map<String, Object>> list2 = new ArrayList<>();
-        for (Item i : items){
-            Map<String, Object> map = new HashMap<String, Object>();
-            map.put("Amount",i.getAmount());
-            map.put("name",i.getName());
-            map.put("price", "$"+i.getPrice());
-            list2.add(map);
-        }
-
-        SimpleAdapter as2 = new SimpleAdapter(context,
-                list2,
-                R.layout.cart_adapter,
-                new String[] {"Amount","name","price"},
-                new int[] {R.id.txtAmt,R.id.txtName,R.id.txtPrice});
-        listView2.setAdapter(as2);
-    }
+//    private void setupCustomFilterView(View customView){
+//        ListView listView2 = (ListView)customView.findViewById(R.id.listview);
+//        ArrayList<Map<String, Object>> list2 = new ArrayList<>();
+//        for (Item i : items){
+//            Map<String, Object> map = new HashMap<String, Object>();
+//            map.put("Amount",i.getAmount());
+//            map.put("name",i.getName());
+//            map.put("price", "$"+i.getPrice());
+//            list2.add(map);
+//        }
+//
+//        SimpleAdapter as2 = new SimpleAdapter(context,
+//                list2,
+//                R.layout.cart_adapter,
+//                new String[] {"Amount","name","price"},
+//                new int[] {R.id.txtAmt,R.id.txtName,R.id.txtPrice});
+//        listView2.setAdapter(as2);
+//    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -214,6 +228,8 @@ public class MakeOrderActivity extends AppCompatActivity {
             }
             SubmitThread submitThread = new SubmitThread(map);
             submitThread.start();
+            viewPager.setCurrentItem(2);
+
         }
     }
 
@@ -292,6 +308,18 @@ public class MakeOrderActivity extends AppCompatActivity {
 
     }
 
+    private void setAdapter(Message message){
+        ArrayList<String> status = new ArrayList<>();
+        for (int i = 0 ; i < statuslist.size(); i ++){
+            status.add(statuslist.get(i));
+            if (statuslist.get(i).equals(message.getNodification().getNodification())){
+                break;
+            }
+        }
+        ListView listview = (ListView)pageview.get(2).findViewById(R.id.listTraceOrder);
+        TraceOrderAdapter toa = new TraceOrderAdapter(this,status,R.layout.trace_adapter);
+        listview.setAdapter(toa);
+    }
 
     public class MyOrderAdapter extends BaseAdapter{
 
@@ -375,6 +403,69 @@ public class MakeOrderActivity extends AppCompatActivity {
 
     }
 
+    public class TraceOrderAdapter extends BaseAdapter {
+        private Context context;
+        private ArrayList<String> data;
+        private int layout;
+        private LayoutInflater myInflater;
+
+        public TraceOrderAdapter(Context c, ArrayList<String> data, int layoutId){
+            this.context = c;
+            this.layout = layoutId;
+            myInflater = LayoutInflater.from(context);
+            if(data.size() < statuslist.size()){
+                data.add(statuslist.get(data.size()));
+            }else {
+                data.add("Ready to Pickup");
+            }
+            this.data = new ArrayList<>();
+            for (int i = data.size()-1; i >=0; i--){
+                this.data.add(data.get(i));
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return data.size();
+        }
+
+        @Override
+        public Object getItem(int i) {
+            return data.get(i);
+        }
+
+        @Override
+        public long getItemId(int i) {
+            return i;
+        }
+
+        @Override
+        public View getView(int i, View view, ViewGroup viewGroup) {
+            view = myInflater.inflate(this.layout,null);
+            final TextView txtStatus = (TextView)view.findViewById(R.id.txtStatus);
+            txtStatus.setText(data.get(i));
+            final ImageView img = (ImageView)view.findViewById(R.id.statusimg);
+            if (i == 0){
+
+//                Log.i("in",img.toString());
+//                Drawable d = getResources().getDrawable(R.drawable.timeline_coming);
+                //img.setImageResource(R.drawable.timeline_pass);
+                img.setImageResource(R.drawable.timeline_coming);
+            }else if(i == 1){
+
+//                Log.i("in",img.toString());
+//                Drawable d = getResources().getDrawable(R.drawable.timeline_current);
+                //img.setImageResource(R.drawable.timeline_pass);
+                img.setImageResource(R.drawable.timeline_current);
+            }else {
+                //Drawable d = getResources().getDrawable(R.drawable.timeline_pass);
+                //img.setImageResource(R.drawable.timeline_pass);
+                img.setImageResource(R.drawable.timeline_pass);
+            }
+            return view;
+        }
+    }
+
     private class SubmitThread extends Thread {
         Map<String, Integer> map;
         SubmitThread(Map<String, Integer> map) {
@@ -434,29 +525,51 @@ public class MakeOrderActivity extends AppCompatActivity {
                         int orderId = message.getOrder().getOrderId();
                         if (message.getNodification().getNodification().equals(
                                 Nodification.Status.PARTIAL.getStatus())){
-                            AlertDialog.Builder builder = new AlertDialog.Builder(MakeOrderActivity.this);
 
-                            Message finalMessage = message;
-                            builder.setTitle("Delete entry")
-                                    .setMessage("Are you sure you want to delete this entry?")
-                                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            // TODO Solve "Skipped 437 frames!  The application may be doing too much work on its main thread." problem
-                                            // continue with place order
-//                                            SubmitThread submitThread = new SubmitThread((Map<String, Integer>) finalMessage.getOther());
-//                                            submitThread.start();
-                                        }
-                                    })
-                                    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int which) {
-//                                            orderList.get(orderId).getNodification().setNodification(Nodification.Status.CANCEL.getStatus());
-                                        }
-                                    });
-                            builder.create();
-                            builder.show();
+                            final Message finalMessage = message;
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(MakeOrderActivity.this);
+                                    builder.setTitle("Delete entry")
+                                            .setMessage("Are you sure you want to delete this entry?")
+                                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    // TODO Solve "Skipped 437 frames!  The application may be doing too much work on its main thread." problem
+                                                    // continue with place order
+                                            SubmitThread submitThread = new SubmitThread((Map<String, Integer>) finalMessage.getOther());
+                                            submitThread.start();
+                                                }
+                                            })
+                                            .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                                                public void onClick(DialogInterface dialog, int which) {
+                                            orderList.get(orderId).getNodification().setNodification(Nodification.Status.CANCEL.getStatus());
+                                                }
+                                            });
+                                    builder.create();
+                                    builder.show();
+                                    pageview.get(2).setVisibility(View.GONE);
+                                }
+                            });
+
                         }
                         else {
                             orderList.get(orderId).setNodification(message.getNodification());
+                            final Message dispmessage = message;
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    for(String s : statuslist){
+                                        if (dispmessage.getNodification().getNodification().equals(s)){
+                                            pageview.get(2).setVisibility(View.VISIBLE);
+                                            setAdapter(dispmessage);
+                                            return;
+                                        }
+                                    }
+                                    pageview.get(2).setVisibility(View.GONE);
+                                }
+                            });
+
                         }
                     }
                     if (isInteger) {
@@ -481,10 +594,9 @@ public class MakeOrderActivity extends AppCompatActivity {
                 }
             }
         }
-
-
-
     }
+
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
