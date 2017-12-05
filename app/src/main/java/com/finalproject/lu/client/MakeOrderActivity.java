@@ -4,7 +4,6 @@ package com.finalproject.lu.client;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import java.text.DecimalFormat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
@@ -32,6 +31,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import android.widget.TextView;
 
@@ -58,6 +59,7 @@ public class MakeOrderActivity extends AppCompatActivity {
     private int customerId;
     private String customerName;
     final Context context = this;
+    private ExecutorService submitPool = Executors.newCachedThreadPool();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,9 +68,7 @@ public class MakeOrderActivity extends AppCompatActivity {
         customerId = 0;
         customerName = "Jerry";
         currentOrder = new MyOrder();
-
         inidata();
-//        setAdapter(null);
         orderList = new ArrayList<>();
         MyClientTask myClientTask = new MyClientTask("localhost", 8080, 8081);
         myClientTask.start();
@@ -164,9 +164,6 @@ public class MakeOrderActivity extends AppCompatActivity {
             TextView txttime = (TextView)v.findViewById(R.id.txtOrderTime);
             txttime.setText(currentOrder.getIssuedDate().toString());
         }
-        TextView txttotal = (TextView)v.findViewById(R.id.txtTotalPrice);
-        DecimalFormat decimalFormat=new DecimalFormat(".00");
-        txttotal.setText(decimalFormat.format(currentOrder.getTotalPrice()));
         ListView listView = (ListView)v.findViewById(R.id.listview);
         ArrayList<Map<String, Object>> list = new ArrayList<>();
         for (Item i : currentOrder.getItems()){
@@ -186,24 +183,24 @@ public class MakeOrderActivity extends AppCompatActivity {
         listView.setAdapter(as);
     }
 
-//    private void setupCustomFilterView(View customView){
-//        ListView listView2 = (ListView)customView.findViewById(R.id.listview);
-//        ArrayList<Map<String, Object>> list2 = new ArrayList<>();
-//        for (Item i : items){
-//            Map<String, Object> map = new HashMap<String, Object>();
-//            map.put("Amount",i.getAmount());
-//            map.put("name",i.getName());
-//            map.put("price", "$"+i.getPrice());
-//            list2.add(map);
-//        }
-//
-//        SimpleAdapter as2 = new SimpleAdapter(context,
-//                list2,
-//                R.layout.cart_adapter,
-//                new String[] {"Amount","name","price"},
-//                new int[] {R.id.txtAmt,R.id.txtName,R.id.txtPrice});
-//        listView2.setAdapter(as2);
-//    }
+    private void setupCustomFilterView(View customView){
+        ListView listView2 = (ListView)customView.findViewById(R.id.listview);
+        ArrayList<Map<String, Object>> list2 = new ArrayList<>();
+        for (Item i : items){
+            Map<String, Object> map = new HashMap<String, Object>();
+            map.put("Amount",i.getAmount());
+            map.put("name",i.getName());
+            map.put("price", "$"+i.getPrice());
+            list2.add(map);
+        }
+
+        SimpleAdapter as2 = new SimpleAdapter(context,
+                list2,
+                R.layout.cart_adapter,
+                new String[] {"Amount","name","price"},
+                new int[] {R.id.txtAmt,R.id.txtName,R.id.txtPrice});
+        listView2.setAdapter(as2);
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -226,10 +223,8 @@ public class MakeOrderActivity extends AppCompatActivity {
             for(Item i : currentOrder.getItems()){
                 map.put(i.getName(), i.getAmount());
             }
-            SubmitThread submitThread = new SubmitThread(map);
-            submitThread.start();
             viewPager.setCurrentItem(2);
-
+            submitPool.execute(new SubmitThread(map, false));
         }
     }
 
@@ -468,8 +463,10 @@ public class MakeOrderActivity extends AppCompatActivity {
 
     private class SubmitThread extends Thread {
         Map<String, Integer> map;
-        SubmitThread(Map<String, Integer> map) {
+        boolean partial;
+        SubmitThread(Map<String, Integer> map, boolean partial) {
             this.map = map;
+            this.partial = partial;
         }
 
         @Override
@@ -483,7 +480,8 @@ public class MakeOrderActivity extends AppCompatActivity {
                 oos = new ObjectOutputStream(socket.getOutputStream());
                 //TODO hardcode sample code
                 Order order = new Order(orderList.size(), customerId, customerName, map);
-                Message message = new Message(order, new Nodification(Nodification.Status.SUBMIT.getStatus()), false, null);
+                Message message = partial ? new Message(order, new Nodification(Nodification.Status.PARTIAL.getStatus()), false, null) :
+                new Message(order, new Nodification(Nodification.Status.SUBMIT.getStatus()), false, null);
                 oos.writeObject(message);
                 oos.flush();
                 orderList.add(message);
@@ -526,7 +524,8 @@ public class MakeOrderActivity extends AppCompatActivity {
                         if (message.getNodification().getNodification().equals(
                                 Nodification.Status.PARTIAL.getStatus())){
 
-                            final Message finalMessage = message;
+                            Message finalMessage = message;
+
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -537,8 +536,8 @@ public class MakeOrderActivity extends AppCompatActivity {
                                                 public void onClick(DialogInterface dialog, int which) {
                                                     // TODO Solve "Skipped 437 frames!  The application may be doing too much work on its main thread." problem
                                                     // continue with place order
-                                            SubmitThread submitThread = new SubmitThread((Map<String, Integer>) finalMessage.getOther());
-                                            submitThread.start();
+                                                    submitPool.execute(new SubmitThread((Map<String, Integer>) finalMessage.getOther(), true));
+
                                                 }
                                             })
                                             .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -555,21 +554,6 @@ public class MakeOrderActivity extends AppCompatActivity {
                         }
                         else {
                             orderList.get(orderId).setNodification(message.getNodification());
-                            final Message dispmessage = message;
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    for(String s : statuslist){
-                                        if (dispmessage.getNodification().getNodification().equals(s)){
-                                            pageview.get(2).setVisibility(View.VISIBLE);
-                                            setAdapter(dispmessage);
-                                            return;
-                                        }
-                                    }
-                                    pageview.get(2).setVisibility(View.GONE);
-                                }
-                            });
-
                         }
                     }
                     if (isInteger) {
@@ -594,9 +578,10 @@ public class MakeOrderActivity extends AppCompatActivity {
                 }
             }
         }
+
+
+
     }
-
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
