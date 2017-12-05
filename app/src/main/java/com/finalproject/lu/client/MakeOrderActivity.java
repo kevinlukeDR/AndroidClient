@@ -64,17 +64,15 @@ public class MakeOrderActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.mainlayout);
-        customerId = 0;
-        customerName = "Jerry";
-        currentOrder = new MyOrder();
-        inidata();
-        orderList = new ArrayList<>();
-        MyClientTask myClientTask = new MyClientTask("localhost", 8080, 8081);
-        myClientTask.start();
+        setContentView(R.layout.login_layout);
     }
 
     private void inidata(){
+        orderList = new ArrayList<>();
+        customerId = 0;
+        customerName = "Jerry";
+        currentOrder = new MyOrder();
+
         viewPager = (ViewPager) findViewById(R.id.viewPager);
 
         LayoutInflater inflater = getLayoutInflater();
@@ -150,6 +148,12 @@ public class MakeOrderActivity extends AppCompatActivity {
                 new int[]{R.id.imageView,R.id.textTitle,R.id.textPrice});
         listView.setAdapter(as);// set list view for menu
 
+
+    }
+
+    public void onClick_Order(View view){
+        MyClientTask myClientTask = new MyClientTask("localhost", 8080, 8081);
+        myClientTask.start();
 
     }
 
@@ -514,6 +518,25 @@ public class MakeOrderActivity extends AppCompatActivity {
                     boolean isInteger = false;
                     if (object instanceof String) {
                         reply = (String) object;
+                        if (reply.equals("Closed")){
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(MakeOrderActivity.this);
+                                    builder.setTitle("Status")
+                                            .setMessage("Closed Now!")
+                                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                }
+                                            });
+                                    builder.create();
+                                    builder.show();
+                                }
+                            });
+                            continue;
+                        }else{
+
+                        }
                     } else if (object instanceof Message) {
                         message = (Message) object;
                     } else if (object instanceof Integer) {
@@ -558,6 +581,13 @@ public class MakeOrderActivity extends AppCompatActivity {
                     }
                     if (isInteger) {
                         customerId = (Integer) object;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                setContentView(R.layout.mainlayout);
+                                inidata();
+                            }
+                        });
                     } else {
                         // TODO Other return case
                     }
