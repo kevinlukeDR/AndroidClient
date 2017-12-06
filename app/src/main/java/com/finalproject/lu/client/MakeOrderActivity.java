@@ -8,7 +8,6 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,7 +16,6 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,6 +33,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import android.widget.TextView;
+import android.widget.Toast;
 
 import POJO.FoodsEnum;
 import POJO.Message;
@@ -55,7 +54,7 @@ public class MakeOrderActivity extends AppCompatActivity {
     int dstPort;
     int listenPort;
     private static List<Message> orderList;
-
+    private Message currentshowed;
     private int customerId;
     private String customerName;
     final Context context = this;
@@ -78,13 +77,16 @@ public class MakeOrderActivity extends AppCompatActivity {
         LayoutInflater inflater = getLayoutInflater();
         View v1 = inflater.inflate(R.layout.activity_make_order,null);
         View v2 = inflater.inflate(R.layout.activity_view_order,null);
-        View v3 = inflater.inflate(R.layout.activity_trace_order,null);
+        View v3 = inflater.inflate(R.layout.activity_orderhistory,null);
+        View v4 = inflater.inflate(R.layout.activity_trace_order,null);
 
         pageview =new ArrayList<View>();
         pageview.add(v1);
         pageview.add(v2);
         pageview.add(v3);
-        pageview.get(2).setVisibility(View.GONE);
+        pageview.add(v4);
+        pageview.get(2).setVisibility(View.INVISIBLE);
+        pageview.get(3).setVisibility(View.INVISIBLE);
 
         PagerAdapter mpa = new PagerAdapter() {
             @Override
@@ -168,6 +170,13 @@ public class MakeOrderActivity extends AppCompatActivity {
             TextView txttime = (TextView)v.findViewById(R.id.txtOrderTime);
             txttime.setText(currentOrder.getIssuedDate().toString());
         }
+        TextView itemprice = (TextView)v.findViewById(R.id.txtItemsPrice);
+        TextView tax = (TextView)v.findViewById(R.id.txtTax);
+        TextView totalprice = (TextView)v.findViewById(R.id.txtTotalPrice);
+        itemprice.setText(currentOrder.getTotalPrice()+"");
+        tax.setText(currentOrder.getTotalPrice()*0.06+"");
+        totalprice.setText("$"+currentOrder.getTotalPrice()*1.06);
+
         ListView listView = (ListView)v.findViewById(R.id.listview);
         ArrayList<Map<String, Object>> list = new ArrayList<>();
         for (Item i : currentOrder.getItems()){
@@ -187,24 +196,25 @@ public class MakeOrderActivity extends AppCompatActivity {
         listView.setAdapter(as);
     }
 
-    private void setupCustomFilterView(View customView){
-        ListView listView2 = (ListView)customView.findViewById(R.id.listview);
-        ArrayList<Map<String, Object>> list2 = new ArrayList<>();
-        for (Item i : items){
-            Map<String, Object> map = new HashMap<String, Object>();
-            map.put("Amount",i.getAmount());
-            map.put("name",i.getName());
-            map.put("price", "$"+i.getPrice());
-            list2.add(map);
-        }
-
-        SimpleAdapter as2 = new SimpleAdapter(context,
-                list2,
-                R.layout.cart_adapter,
-                new String[] {"Amount","name","price"},
-                new int[] {R.id.txtAmt,R.id.txtName,R.id.txtPrice});
-        listView2.setAdapter(as2);
-    }
+//    private void setupCustomFilterView(View customView){
+//        ListView listView2 = (ListView)customView.findViewById(R.id.listview);
+//        ArrayList<Map<String, Object>> list2 = new ArrayList<>();
+//        for (Item i : items){
+//            Map<String, Object> map = new HashMap<String, Object>();
+//            map.put("Amount",i.getAmount());
+//            map.put("name",i.getName());
+//            map.put("price", "$"+i.getPrice());
+//            list2.add(map);
+//        }
+//
+//        SimpleAdapter as2 = new SimpleAdapter(context,
+//                list2,
+//                R.layout.cart_adapter,
+//                new String[] {"Amount","name","price"},
+//                new int[] {R.id.txtAmt,R.id.txtName,R.id.txtPrice});
+//
+//        listView2.setAdapter(as2);
+//    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -227,7 +237,6 @@ public class MakeOrderActivity extends AppCompatActivity {
             for(Item i : currentOrder.getItems()){
                 map.put(i.getName(), i.getAmount());
             }
-            viewPager.setCurrentItem(2);
             submitPool.execute(new SubmitThread(map, false));
         }
     }
@@ -315,7 +324,7 @@ public class MakeOrderActivity extends AppCompatActivity {
                 break;
             }
         }
-        ListView listview = (ListView)pageview.get(2).findViewById(R.id.listTraceOrder);
+        ListView listview = (ListView)pageview.get(3).findViewById(R.id.listTraceOrder);
         TraceOrderAdapter toa = new TraceOrderAdapter(this,status,R.layout.trace_adapter);
         listview.setAdapter(toa);
     }
@@ -449,6 +458,7 @@ public class MakeOrderActivity extends AppCompatActivity {
 //                Log.i("in",img.toString());
 //                Drawable d = getResources().getDrawable(R.drawable.timeline_coming);
                 //img.setImageResource(R.drawable.timeline_pass);
+
                 img.setImageResource(R.drawable.timeline_coming);
             }else if(i == 1){
 
@@ -463,6 +473,70 @@ public class MakeOrderActivity extends AppCompatActivity {
             }
             return view;
         }
+    }
+
+    public class OrderHistoryAdapter extends BaseAdapter {
+        private Context context;
+        private List<?> data;
+        private int layout;
+        private LayoutInflater myInflater;
+
+        public OrderHistoryAdapter(Context c, List<?> data, int layoutId) {
+            this.context = c;
+            this.data = data;
+            this.layout = layoutId;
+            myInflater = LayoutInflater.from(context);
+        }
+
+        public int getCount() {
+            return this.data.size();
+        }
+
+        @Override
+        public Object getItem(int p) {
+            return this.data.get(p);
+        }
+
+        @Override
+        public long getItemId(int p) {
+            return p;
+        }
+
+        public View getView(final int p, View view, ViewGroup viewGroup) {
+            final int position = p;
+            Message order = (Message)data.get(p);
+            view = myInflater.inflate(this.layout, null);
+            TextView orderID = (TextView)view.findViewById(R.id.txtids);
+            orderID.setText(order.getOrder().getOrderId()+"");
+            Button button = (Button) view.findViewById(R.id.button);
+            button.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View view) {
+//                    if (listener == null){
+//                        listener = new OrderStatusListener(order);
+//                        currentshowed = new Message(order.getOrder(),order.getNodification(),true,order.getOther());
+//                    }else{
+//                        listener.setMessage(order);
+//                    }
+                    pageview.get(3).setVisibility(View.VISIBLE);
+                    setAdapter(order);
+                    currentshowed = order;
+                    viewPager.setCurrentItem(3);
+                }
+            });
+            return view;
+
+        }
+    }
+
+    public void onClick_viewhistory(View view){
+        View v = viewPager.getChildAt(2);
+        v.setVisibility(View.VISIBLE);
+        ListView listview = (ListView) v.findViewById(R.id.orderhistorylist);
+        OrderHistoryAdapter ma = new OrderHistoryAdapter(context, orderList, R.layout.orderhistoryadapter);
+        listview.setAdapter(ma);
+        viewPager.setCurrentItem(2);
     }
 
     private class SubmitThread extends Thread {
@@ -495,6 +569,29 @@ public class MakeOrderActivity extends AppCompatActivity {
         }
 
     }
+
+    private class OrderStatusListener extends Thread{
+        private Message message;
+
+        public OrderStatusListener(Message m) {
+            this.message = m;
+        }
+        public void setMessage(Message m){
+            this.message = m;
+        }
+        @Override
+        public void run(){
+            while(true){
+                if(currentshowed.getOrder().getOrderId() != message.getOrder().getOrderId() || currentshowed.getNodification().getNodification().equals(message.getNodification().getNodification())){
+                    setAdapter(message);
+                    currentshowed = message;
+                }
+
+            }
+            }
+        }
+
+
 
 
     public class MyClientTask extends Thread {
@@ -570,13 +667,24 @@ public class MakeOrderActivity extends AppCompatActivity {
                                             });
                                     builder.create();
                                     builder.show();
-                                    pageview.get(2).setVisibility(View.GONE);
+                                    pageview.get(2).setVisibility(View.INVISIBLE);
                                 }
                             });
-
                         }
                         else {
                             orderList.get(orderId).setNodification(message.getNodification());
+                            final Message m = message;
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(), m.getNodification().getNodification(),Toast.LENGTH_SHORT).show();
+                                    if (currentshowed != null) {
+                                        if (currentshowed.getOrder().getOrderId() == m.getOrder().getOrderId()) {
+                                            setAdapter(m);
+                                        }
+                                    }
+                                }
+                            });
                         }
                     }
                     if (isInteger) {

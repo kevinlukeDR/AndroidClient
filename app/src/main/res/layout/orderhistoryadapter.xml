@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="40dp"
+    android:orientation="horizontal"
+    android:weightSum="4">
+
+    <TextView
+        android:id="@+id/textViewID"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="7dp"
+        android:layout_weight="1"
+        android:fontFamily="sans-serif"
+        android:text="OrderID:"
+        android:textAlignment="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/txtids"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="7dp"
+        android:layout_weight="2"
+        android:textAlignment="textStart"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/button"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:background="?attr/colorAccent"
+        android:fontFamily="sans-serif"
+        android:text="Trace"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:typeface="sans" />
+
+</LinearLayout>
+
