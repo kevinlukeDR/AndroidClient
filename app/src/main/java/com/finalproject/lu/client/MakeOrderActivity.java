@@ -8,12 +8,14 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 
@@ -24,6 +26,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -68,8 +71,8 @@ public class MakeOrderActivity extends AppCompatActivity {
 
     private void inidata(){
         orderList = new ArrayList<>();
-        customerId = 0;
-        customerName = "Jerry";
+//        customerId = 0;
+//        customerName = "Jerry";
         currentOrder = new MyOrder();
 
         viewPager = (ViewPager) findViewById(R.id.viewPager);
@@ -85,8 +88,8 @@ public class MakeOrderActivity extends AppCompatActivity {
         pageview.add(v2);
         pageview.add(v3);
         pageview.add(v4);
-        pageview.get(2).setVisibility(View.INVISIBLE);
-        pageview.get(3).setVisibility(View.INVISIBLE);
+//        pageview.get(2).setVisibility(View.GONE);
+//        pageview.get(3).setVisibility(View.GONE);
 
         PagerAdapter mpa = new PagerAdapter() {
             @Override
@@ -170,12 +173,14 @@ public class MakeOrderActivity extends AppCompatActivity {
             TextView txttime = (TextView)v.findViewById(R.id.txtOrderTime);
             txttime.setText(currentOrder.getIssuedDate().toString());
         }
+
+        DecimalFormat df = new DecimalFormat(".00");
         TextView itemprice = (TextView)v.findViewById(R.id.txtItemsPrice);
         TextView tax = (TextView)v.findViewById(R.id.txtTax);
         TextView totalprice = (TextView)v.findViewById(R.id.txtTotalPrice);
-        itemprice.setText(currentOrder.getTotalPrice()+"");
-        tax.setText(currentOrder.getTotalPrice()*0.06+"");
-        totalprice.setText("$"+currentOrder.getTotalPrice()*1.06);
+        itemprice.setText(df.format(currentOrder.getTotalPrice()));
+        tax.setText(df.format(currentOrder.getTotalPrice()*0.06));
+        totalprice.setText("$"+df.format(currentOrder.getTotalPrice()*1.06));
 
         ListView listView = (ListView)v.findViewById(R.id.listview);
         ArrayList<Map<String, Object>> list = new ArrayList<>();
@@ -519,7 +524,7 @@ public class MakeOrderActivity extends AppCompatActivity {
 //                    }else{
 //                        listener.setMessage(order);
 //                    }
-                    pageview.get(3).setVisibility(View.VISIBLE);
+//                    pageview.get(3).setVisibility(View.VISIBLE);
                     setAdapter(order);
                     currentshowed = order;
                     viewPager.setCurrentItem(3);
@@ -531,8 +536,8 @@ public class MakeOrderActivity extends AppCompatActivity {
     }
 
     public void onClick_viewhistory(View view){
-        View v = viewPager.getChildAt(2);
-        v.setVisibility(View.VISIBLE);
+        View v = pageview.get(2);
+//        v.setVisibility(View.VISIBLE);
         ListView listview = (ListView) v.findViewById(R.id.orderhistorylist);
         OrderHistoryAdapter ma = new OrderHistoryAdapter(context, orderList, R.layout.orderhistoryadapter);
         listview.setAdapter(ma);
@@ -569,30 +574,6 @@ public class MakeOrderActivity extends AppCompatActivity {
         }
 
     }
-
-    private class OrderStatusListener extends Thread{
-        private Message message;
-
-        public OrderStatusListener(Message m) {
-            this.message = m;
-        }
-        public void setMessage(Message m){
-            this.message = m;
-        }
-        @Override
-        public void run(){
-            while(true){
-                if(currentshowed.getOrder().getOrderId() != message.getOrder().getOrderId() || currentshowed.getNodification().getNodification().equals(message.getNodification().getNodification())){
-                    setAdapter(message);
-                    currentshowed = message;
-                }
-
-            }
-            }
-        }
-
-
-
 
     public class MyClientTask extends Thread {
         String reply = "";
@@ -657,7 +638,6 @@ public class MakeOrderActivity extends AppCompatActivity {
                                                     // TODO Solve "Skipped 437 frames!  The application may be doing too much work on its main thread." problem
                                                     // continue with place order
                                                     submitPool.execute(new SubmitThread((Map<String, Integer>) finalMessage.getOther(), true));
-
                                                 }
                                             })
                                             .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -667,7 +647,7 @@ public class MakeOrderActivity extends AppCompatActivity {
                                             });
                                     builder.create();
                                     builder.show();
-                                    pageview.get(2).setVisibility(View.INVISIBLE);
+//                                    pageview.get(2).setVisibility(View.GONE);
                                 }
                             });
                         }
@@ -677,7 +657,7 @@ public class MakeOrderActivity extends AppCompatActivity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Toast.makeText(getApplicationContext(), m.getNodification().getNodification(),Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getApplicationContext(), "Order "+m.getOrder().getOrderId()+"has new Status: "+m.getNodification().getNodification(),Toast.LENGTH_SHORT).show();
                                     if (currentshowed != null) {
                                         if (currentshowed.getOrder().getOrderId() == m.getOrder().getOrderId()) {
                                             setAdapter(m);
@@ -692,6 +672,8 @@ public class MakeOrderActivity extends AppCompatActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                EditText txtName = (EditText) findViewById(R.id.txtUserName);
+                                customerName = txtName.getText().toString();
                                 setContentView(R.layout.mainlayout);
                                 inidata();
                             }
