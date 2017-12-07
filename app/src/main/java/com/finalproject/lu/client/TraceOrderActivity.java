@@ -2,10 +2,8 @@ package com.finalproject.lu.client;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +15,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 public class TraceOrderActivity extends AppCompatActivity {
-    private MyOrder currentOrder;
+    private Message currentOrder;
     private ArrayList<String> statuslist;
     private android.nfc.Tag Tag;
 
@@ -27,10 +25,10 @@ public class TraceOrderActivity extends AppCompatActivity {
         setContentView(R.layout.activity_trace_order);
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();
-        currentOrder = (MyOrder)bundle.getSerializable("CurrentOrder");
+        currentOrder = (Message)bundle.getSerializable("CurrentOrder");
 
         statuslist = new ArrayList<>();
-        for (MyOrder.Status s: MyOrder.Status.values()){
+        for (Message.Status s: Message.Status.values()){
             statuslist.add(s.getValue());
         }
 
@@ -51,7 +49,7 @@ public class TraceOrderActivity extends AppCompatActivity {
     }
 
     public void onClick_change(View view){
-        MyOrder.Status[] status = MyOrder.Status.values();
+        Message.Status[] status = Message.Status.values();
         for(int i =0; i<status.length-1;i++){
             if (currentOrder.getCurrentStatus() == status[i]){
                 currentOrder.setCurrentStatus(status[i+1]);

@@ -8,7 +8,7 @@ import java.util.Date;
  * Created by AY Study on 2017/11/26.
  */
 
-public class MyOrder implements Serializable {
+public class Message implements Serializable {
     private String id;
     private Date issuedDate;
     private ArrayList<Item> items;
@@ -32,7 +32,7 @@ public class MyOrder implements Serializable {
 
     }
 
-    public MyOrder(){
+    public Message(){
     items = new ArrayList<>();
     }
 

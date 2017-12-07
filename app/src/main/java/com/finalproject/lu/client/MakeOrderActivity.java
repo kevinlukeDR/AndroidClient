@@ -3,12 +3,12 @@ package com.finalproject.lu.client;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
@@ -39,7 +38,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import POJO.FoodsEnum;
-import POJO.Message;
 import POJO.Nodification;
 import POJO.Order;
 
@@ -50,14 +48,14 @@ public class MakeOrderActivity extends AppCompatActivity {
     private ArrayList<String> statuslist;
     private ViewPager viewPager;
     private ArrayList<View> pageview;
-    private MyOrder currentOrder;
+    private Message currentOrder;
     private Socket socket;
     private Socket listenSocket;
     String dstAddress;
     int dstPort;
     int listenPort;
-    private static List<Message> orderList;
-    private Message currentshowed;
+    private static List<POJO.Message> orderList;
+    private POJO.Message currentshowed;
     private int customerId;
     private String customerName;
     final Context context = this;
@@ -73,7 +71,7 @@ public class MakeOrderActivity extends AppCompatActivity {
         orderList = new ArrayList<>();
 //        customerId = 0;
 //        customerName = "Jerry";
-        currentOrder = new MyOrder();
+        currentOrder = new Message();
 
         viewPager = (ViewPager) findViewById(R.id.viewPager);
 
@@ -159,6 +157,10 @@ public class MakeOrderActivity extends AppCompatActivity {
     public void onClick_Order(View view){
         MyClientTask myClientTask = new MyClientTask("localhost", 8080, 8081);
         myClientTask.start();
+
+    }
+
+    public void onClick_View_Detail(View view){
 
     }
 
@@ -321,7 +323,7 @@ public class MakeOrderActivity extends AppCompatActivity {
 
     }
 
-    private void setAdapter(Message message){
+    private void setAdapter(POJO.Message message){
         ArrayList<String> status = new ArrayList<>();
         for (int i = 0 ; i < statuslist.size(); i ++){
             status.add(statuslist.get(i));
@@ -509,7 +511,7 @@ public class MakeOrderActivity extends AppCompatActivity {
 
         public View getView(final int p, View view, ViewGroup viewGroup) {
             final int position = p;
-            Message order = (Message)data.get(p);
+            POJO.Message order = (POJO.Message)data.get(p);
             view = myInflater.inflate(this.layout, null);
             TextView orderID = (TextView)view.findViewById(R.id.txtids);
             orderID.setText(order.getOrder().getOrderId()+"");
@@ -528,6 +530,18 @@ public class MakeOrderActivity extends AppCompatActivity {
                     setAdapter(order);
                     currentshowed = order;
                     viewPager.setCurrentItem(3);
+                }
+            });
+
+            Button buttonview = (Button) view.findViewById(R.id.btnview);
+            buttonview.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(context,ItemActivity.class);
+                    Bundle b = new Bundle();
+                    b.putSerializable("Order", order);
+                    intent.putExtras(b);
+                    startActivity(intent);
                 }
             });
             return view;
@@ -563,8 +577,8 @@ public class MakeOrderActivity extends AppCompatActivity {
                 oos = new ObjectOutputStream(socket.getOutputStream());
                 //TODO hardcode sample code
                 Order order = new Order(orderList.size(), customerId, customerName, map);
-                Message message = partial ? new Message(order, new Nodification(Nodification.Status.PARTIAL.getStatus()), false, null) :
-                new Message(order, new Nodification(Nodification.Status.SUBMIT.getStatus()), false, null);
+                POJO.Message message = partial ? new POJO.Message(order, new Nodification(Nodification.Status.PARTIAL.getStatus()), false, null) :
+                new POJO.Message(order, new Nodification(Nodification.Status.SUBMIT.getStatus()), false, null);
                 oos.writeObject(message);
                 oos.flush();
                 orderList.add(message);
@@ -592,7 +606,7 @@ public class MakeOrderActivity extends AppCompatActivity {
                     InputStream is = listenSocket.getInputStream();
                     ObjectInputStream ois = new ObjectInputStream(is);
                     Object object = ois.readObject();
-                    Message message = null;
+                    POJO.Message message = null;
                     boolean isInteger = false;
                     if (object instanceof String) {
                         reply = (String) object;
@@ -615,8 +629,8 @@ public class MakeOrderActivity extends AppCompatActivity {
                         }else{
 
                         }
-                    } else if (object instanceof Message) {
-                        message = (Message) object;
+                    } else if (object instanceof POJO.Message) {
+                        message = (POJO.Message) object;
                     } else if (object instanceof Integer) {
                         isInteger = true;
                     }
@@ -625,7 +639,7 @@ public class MakeOrderActivity extends AppCompatActivity {
                         if (message.getNodification().getNodification().equals(
                                 Nodification.Status.PARTIAL.getStatus())){
 
-                            Message finalMessage = message;
+                            POJO.Message finalMessage = message;
 
                             runOnUiThread(new Runnable() {
                                 @Override
@@ -653,7 +667,7 @@ public class MakeOrderActivity extends AppCompatActivity {
                         }
                         else {
                             orderList.get(orderId).setNodification(message.getNodification());
-                            final Message m = message;
+                            final POJO.Message m = message;
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
