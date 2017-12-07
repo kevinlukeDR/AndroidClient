@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/table3">
     <!--tools:context="com.example.aystudy.fp6200client.TraceOrderActivity"-->
 
 
@@ -27,8 +28,11 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:backgroundTint="@android:color/holo_blue_light"
             android:onClick="onClick_change"
-            android:text="History Order" />
+            android:text="History Order"
+            android:textColor="@color/ColorText"
+            android:textStyle="bold" />
     </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

@@ -15,7 +15,7 @@
         android:text="OrderID:"
         android:textAlignment="center"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        android:textColor="@android:color/white"
+        android:textColor="@android:color/black"
         android:textSize="18sp"
         android:textStyle="bold" />
 
@@ -26,7 +26,7 @@
         android:layout_marginTop="7dp"
         android:layout_weight="2"
         android:textAlignment="textStart"
-        android:textColor="@android:color/white"
+        android:textColor="@android:color/black"
         android:textSize="18sp"
         android:textStyle="bold" />
 
@@ -34,14 +34,15 @@
         android:id="@+id/button"
         style="@style/Widget.AppCompat.Button"
         android:layout_width="0dp"
+        android:layout_height="40dp"
         android:layout_weight="1"
-        android:layout_height="match_parent"
         android:background="?attr/colorAccent"
+        android:backgroundTint="@android:color/holo_blue_light"
         android:fontFamily="sans-serif"
         android:text="Trace"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
-        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:textSize="14sp"
         android:textStyle="bold"
         android:typeface="sans" />
 
@@ -50,7 +51,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="View" />
+        android:backgroundTint="@android:color/holo_blue_light"
+        android:text="View"
+        android:textColor="@color/ColorText" />
 
 </LinearLayout>
 

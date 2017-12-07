@@ -9,46 +9,46 @@
     <TextView
         android:id="@+id/textViewItems"
         android:layout_width="0dp"
-        android:layout_weight="1"
         android:layout_height="30dp"
+        android:layout_weight="1"
         android:fontFamily="serif"
         android:text="Items:"
         android:textAlignment="textStart"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        android:textColor="@android:color/black"
+        android:textColor="@color/ColorText"
         android:textSize="18sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/orderItem"
         android:layout_width="0dp"
-        android:layout_weight="2"
         android:layout_height="45dp"
+        android:layout_weight="2"
         android:textAlignment="textStart"
-        android:textColor="@android:color/black"
+        android:textColor="@color/ColorText"
         android:textSize="18sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/textViewAmount"
         android:layout_width="0dp"
-        android:layout_weight="1"
         android:layout_height="45dp"
+        android:layout_weight="1"
         android:fontFamily="serif"
         android:text="Qnt:"
         android:textAlignment="center"
         android:textAppearance="@style/TextAppearance.AppCompat"
-        android:textColor="@android:color/black"
+        android:textColor="@color/ColorText"
         android:textSize="18sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/OrderAmount"
         android:layout_width="0dp"
-        android:layout_weight="2"
         android:layout_height="45dp"
+        android:layout_weight="2"
         android:textAlignment="textStart"
-        android:textColor="@android:color/black"
+        android:textColor="@color/ColorText"
         android:textSize="18sp"
         android:textStyle="bold" />
 

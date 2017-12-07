@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/table3">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,7 +23,9 @@
                 android:layout_weight="1"
                 android:text="Order ID:"
                 android:textAppearance="@style/TextAppearance.AppCompat.Display1"
-                android:textSize="24sp" />
+                android:textColor="@android:color/background_dark"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/txtOrderID"
@@ -30,7 +33,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
                 android:text="(Empty Bag)"
-                android:textSize="24sp" />
+                android:textColor="@color/ColorText"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
         </LinearLayout>
 
@@ -48,13 +53,17 @@
                 android:layout_weight="1"
                 android:text="Order Time:"
                 android:textAppearance="@style/TextAppearance.AppCompat.Button"
-                android:textSize="14sp" />
+                android:textColor="@color/ColorText"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/txtOrderTime"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="2" />
+                android:layout_weight="2"
+                android:textColor="@color/ColorText"
+                android:textStyle="bold" />
         </LinearLayout>
 
 
@@ -71,7 +80,9 @@
             android:layout_height="20dp"
             android:text="Items:"
             android:textAppearance="@style/TextAppearance.AppCompat"
-            android:textSize="18sp" />
+            android:textColor="@color/ColorText"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <ListView
             android:id="@+id/listview"
@@ -106,7 +117,9 @@
                     android:layout_weight="1"
                     android:text="Items Price:"
                     android:textAlignment="viewStart"
-                    android:textSize="10sp" />
+                    android:textColor="@color/ColorText"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/txtItemsPrice"
@@ -115,7 +128,9 @@
                     android:layout_weight="1"
                     android:text="TextView"
                     android:textAlignment="viewEnd"
-                    android:textSize="10sp" />
+                    android:textColor="@color/ColorText"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <LinearLayout
@@ -132,7 +147,9 @@
                     android:layout_weight="1"
                     android:text="Tax:"
                     android:textAlignment="viewStart"
-                    android:textSize="10sp" />
+                    android:textColor="@color/ColorText"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/txtTax"
@@ -141,7 +158,9 @@
                     android:layout_weight="1"
                     android:text="TextView"
                     android:textAlignment="viewEnd"
-                    android:textSize="10sp" />
+                    android:textColor="@color/ColorText"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
             </LinearLayout>
             <LinearLayout
                 android:id="@+id/totalprice"
@@ -157,6 +176,7 @@
                     android:layout_weight="1"
                     android:text="Total Price:"
                     android:textAlignment="viewStart"
+                    android:textColor="@color/ColorText"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
@@ -167,6 +187,7 @@
                     android:layout_weight="1"
                     android:text="TextView"
                     android:textAlignment="viewEnd"
+                    android:textColor="@color/ColorText"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
@@ -183,17 +204,23 @@
                     android:id="@+id/btnSubmit"
                     android:layout_width="0dp"
                     android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@android:color/holo_blue_light"
                     android:onClick="onClick_Submit"
                     android:text="Submit"
-                    android:layout_weight="1" />
+                    android:textColor="@color/ColorText"
+                    android:textStyle="bold" />
 
                 <Button
                     android:id="@+id/button3"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:backgroundTint="@android:color/holo_blue_light"
                     android:onClick="onClick_viewhistory"
-                    android:text="View Orders" />
+                    android:text="View Orders"
+                    android:textColor="@color/ColorText"
+                    android:textStyle="bold" />
             </LinearLayout>
 
         </LinearLayout>

@@ -165,8 +165,8 @@ public class MakeOrderActivity extends AppCompatActivity {
     }
 
     private void dispOrder(){
-        LayoutInflater inflater = getLayoutInflater();
-        View v = viewPager.getChildAt(1);
+
+        View v = pageview.get(1);
         //View v = inflater.inflate(R.layout.activity_view_order,null);
 
         TextView txtid = (TextView)v.findViewById(R.id.txtOrderID);
@@ -176,7 +176,7 @@ public class MakeOrderActivity extends AppCompatActivity {
             txttime.setText(currentOrder.getIssuedDate().toString());
         }
 
-        DecimalFormat df = new DecimalFormat(".00");
+        DecimalFormat df = new DecimalFormat("0.00");
         TextView itemprice = (TextView)v.findViewById(R.id.txtItemsPrice);
         TextView tax = (TextView)v.findViewById(R.id.txtTax);
         TextView totalprice = (TextView)v.findViewById(R.id.txtTotalPrice);
@@ -395,7 +395,6 @@ public class MakeOrderActivity extends AppCompatActivity {
                     }
                 }
             });
-
             Button btnMin = (Button)view.findViewById(R.id.btnMin);
             btnMin.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -412,7 +411,6 @@ public class MakeOrderActivity extends AppCompatActivity {
                     }
                 }
             });
-
             return view;
         }
 
@@ -461,21 +459,10 @@ public class MakeOrderActivity extends AppCompatActivity {
             txtStatus.setText(data.get(i));
             final ImageView img = (ImageView)view.findViewById(R.id.statusimg);
             if (i == 0){
-
-//                Log.i("in",img.toString());
-//                Drawable d = getResources().getDrawable(R.drawable.timeline_coming);
-                //img.setImageResource(R.drawable.timeline_pass);
-
                 img.setImageResource(R.drawable.timeline_coming);
             }else if(i == 1){
-
-//                Log.i("in",img.toString());
-//                Drawable d = getResources().getDrawable(R.drawable.timeline_current);
-                //img.setImageResource(R.drawable.timeline_pass);
                 img.setImageResource(R.drawable.timeline_current);
             }else {
-                //Drawable d = getResources().getDrawable(R.drawable.timeline_pass);
-                //img.setImageResource(R.drawable.timeline_pass);
                 img.setImageResource(R.drawable.timeline_pass);
             }
             return view;
@@ -509,24 +496,18 @@ public class MakeOrderActivity extends AppCompatActivity {
             return p;
         }
 
+        @Override
         public View getView(final int p, View view, ViewGroup viewGroup) {
             final int position = p;
             POJO.Message order = (POJO.Message)data.get(p);
             view = myInflater.inflate(this.layout, null);
             TextView orderID = (TextView)view.findViewById(R.id.txtids);
             orderID.setText(order.getOrder().getOrderId()+"");
-            Button button = (Button) view.findViewById(R.id.button);
-            button.setOnClickListener(new View.OnClickListener() {
+            Button buttonTrace = (Button) view.findViewById(R.id.button);
+            buttonTrace.setOnClickListener(new View.OnClickListener() {
 
                 @Override
                 public void onClick(View view) {
-//                    if (listener == null){
-//                        listener = new OrderStatusListener(order);
-//                        currentshowed = new Message(order.getOrder(),order.getNodification(),true,order.getOther());
-//                    }else{
-//                        listener.setMessage(order);
-//                    }
-//                    pageview.get(3).setVisibility(View.VISIBLE);
                     setAdapter(order);
                     currentshowed = order;
                     viewPager.setCurrentItem(3);
@@ -545,7 +526,6 @@ public class MakeOrderActivity extends AppCompatActivity {
                 }
             });
             return view;
-
         }
     }
 
@@ -577,7 +557,8 @@ public class MakeOrderActivity extends AppCompatActivity {
                 oos = new ObjectOutputStream(socket.getOutputStream());
                 //TODO hardcode sample code
                 Order order = new Order(orderList.size(), customerId, customerName, map);
-                POJO.Message message = partial ? new POJO.Message(order, new Nodification(Nodification.Status.PARTIAL.getStatus()), false, null) :
+                POJO.Message message = partial ?
+                        new POJO.Message(order, new Nodification(Nodification.Status.PARTIAL.getStatus()), false, null) :
                 new POJO.Message(order, new Nodification(Nodification.Status.SUBMIT.getStatus()), false, null);
                 oos.writeObject(message);
                 oos.flush();
@@ -599,7 +580,6 @@ public class MakeOrderActivity extends AppCompatActivity {
 
         @Override
         public void run() {
-
             try {
                 listenSocket = new Socket(dstAddress, listenPort);
                 while (true) {
@@ -626,8 +606,6 @@ public class MakeOrderActivity extends AppCompatActivity {
                                 }
                             });
                             continue;
-                        }else{
-
                         }
                     } else if (object instanceof POJO.Message) {
                         message = (POJO.Message) object;
@@ -638,9 +616,7 @@ public class MakeOrderActivity extends AppCompatActivity {
                         int orderId = message.getOrder().getOrderId();
                         if (message.getNodification().getNodification().equals(
                                 Nodification.Status.PARTIAL.getStatus())){
-
                             POJO.Message finalMessage = message;
-
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -649,8 +625,6 @@ public class MakeOrderActivity extends AppCompatActivity {
                                             .setMessage("Are you sure you want to delete this entry?")
                                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                                                 public void onClick(DialogInterface dialog, int which) {
-                                                    // TODO Solve "Skipped 437 frames!  The application may be doing too much work on its main thread." problem
-                                                    // continue with place order
                                                     submitPool.execute(new SubmitThread((Map<String, Integer>) finalMessage.getOther(), true));
                                                 }
                                             })
@@ -661,7 +635,6 @@ public class MakeOrderActivity extends AppCompatActivity {
                                             });
                                     builder.create();
                                     builder.show();
-//                                    pageview.get(2).setVisibility(View.GONE);
                                 }
                             });
                         }
@@ -671,7 +644,9 @@ public class MakeOrderActivity extends AppCompatActivity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Toast.makeText(getApplicationContext(), "Order "+m.getOrder().getOrderId()+"has new Status: "+m.getNodification().getNodification(),Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getApplicationContext(),
+                                            "Order "+m.getOrder().getOrderId()+"has new Status: "+m.getNodification().getNodification(),
+                                            Toast.LENGTH_SHORT).show();
                                     if (currentshowed != null) {
                                         if (currentshowed.getOrder().getOrderId() == m.getOrder().getOrderId()) {
                                             setAdapter(m);
@@ -712,9 +687,6 @@ public class MakeOrderActivity extends AppCompatActivity {
                 }
             }
         }
-
-
-
     }
     @Override
     protected void onDestroy() {
